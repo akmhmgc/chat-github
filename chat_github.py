@@ -1,8 +1,9 @@
-import os
 import pickle
 import re
+import uuid
 import streamlit as st
-from llama_index import GPTSimpleVectorIndex, download_loader
+from langchain import OpenAI
+from llama_index import GPTSimpleVectorIndex, LLMPredictor, download_loader
 download_loader("GithubRepositoryReader")
 
 from llama_index.readers.llamahub_modules.github_repo import GithubClient, GithubRepositoryReader
@@ -16,6 +17,7 @@ github_token = st.text_input("GitHub Token", value="", type="password")
 index = None
 
 if openai_api_key and github_token:
+    llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, model_name="text-davinci-003", openai_api_key=openai_api_key))
     st.write("API keys have been set.")
     
     # Add input field for repository URL
@@ -39,7 +41,7 @@ if openai_api_key and github_token:
             f.write(uploaded_file.getvalue())
         with open("uploaded_docs.pkl", "rb") as f:
             docs = pickle.load(f)
-        index = GPTSimpleVectorIndex(docs)
+        index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
     if st.button("Make index data") and owner and repo and not index:
         # Show a loading message while the data is being created
@@ -64,7 +66,7 @@ if openai_api_key and github_token:
                 with open("docs.pkl", "rb") as f:
                     docs = pickle.load(f)
 
-            index = GPTSimpleVectorIndex(docs)
+            index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
     is_file = os.path.isfile("docs.pkl")
     if is_file:
