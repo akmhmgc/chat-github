@@ -64,9 +64,11 @@ if openai_api_key and github_token:
 
             index = GPTSimpleVectorIndex(docs)
 
-        if st.button("Download index data"):
-            with open("docs.pkl", "rb") as f:
-                tmp = f.read()
+    is_file = os.path.isfile("docs.pkl")
+    if is_file:
+        with open("docs.pkl", "rb") as f:
+            tmp = f.read()
+            print(f)
             st.download_button(
                 label="Download index data",
                 data=tmp,
