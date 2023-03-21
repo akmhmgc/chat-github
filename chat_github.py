@@ -41,9 +41,9 @@ if openai_api_key and github_token:
 
     if uploaded_file:
         upload_file_name = uuid.uuid4().hex
-        with open(f'upload/{upload_file_name}.pkl', "wb") as f:
+        with open(f'upload_{upload_file_name}.pkl', "wb") as f:
             f.write(uploaded_file.getvalue())
-        with open(f'upload/{upload_file_name}.pkl', "rb") as f:
+        with open(f'upload_{upload_file_name}.pkl', "rb") as f:
             docs = pickle.load(f)
         index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
@@ -64,14 +64,14 @@ if openai_api_key and github_token:
                 concurrent_requests=10,
             )
             docs = loader.load_data(branch="main")
-            with open(f'download/{download_file_name}.pkl', 'wb') as f:
+            with open(f'download_{download_file_name}.pkl', 'wb') as f:
                 pickle.dump(docs, f)
 
             index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
-    is_file = os.path.isfile(f'download/{st.session_state.download_file_name}.pkl')
+    is_file = os.path.isfile(f'download_{st.session_state.download_file_name}.pkl')
     if is_file:
-        with open(f'download/{st.session_state.download_file_name}.pkl', "rb") as f:
+        with open(f'download_{st.session_state.download_file_name}.pkl', "rb") as f:
             tmp = f.read()
             st.download_button(
                 label="Download index data",
@@ -79,7 +79,7 @@ if openai_api_key and github_token:
                 file_name="docs.pkl",
                 mime="application/octet-stream",
             )
-        with open(f'download/{st.session_state.download_file_name}.pkl', "rb") as f:
+        with open(f'download_{st.session_state.download_file_name}.pkl', "rb") as f:
             docs = pickle.load(f)
             index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
