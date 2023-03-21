@@ -16,6 +16,8 @@ openai_api_key = st.text_input("OpenAI API Key", value="", type="password")
 github_token = st.text_input("GitHub Token", value="", type="password")
 
 index = None
+if 'download_file_name' not in st.session_state:
+    st.session_state['download_file_name'] = None
 
 if openai_api_key and github_token:
     llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, model_name="text-davinci-003", openai_api_key=openai_api_key))
@@ -45,12 +47,11 @@ if openai_api_key and github_token:
             docs = pickle.load(f)
         index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
-    download_file_name = ''
-
     if st.button("Make index data") and owner and repo and not index:
         # Show a loading message while the data is being created
         with st.spinner("Loading data..."):
             download_file_name = uuid.uuid4().hex
+            st.session_state.download_file_name = download_file_name
             # Load the data
             github_client = GithubClient(github_token)
             loader = GithubRepositoryReader(
@@ -68,9 +69,9 @@ if openai_api_key and github_token:
 
             index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
-    is_file = os.path.isfile(f'download/{download_file_name}.pkl')
+    is_file = os.path.isfile(f'download/{st.session_state.download_file_name}.pkl')
     if is_file:
-        with open(f'download/{download_file_name}.pkl', "rb") as f:
+        with open(f'download/{st.session_state.download_file_name}.pkl', "rb") as f:
             tmp = f.read()
             st.download_button(
                 label="Download index data",
@@ -78,6 +79,9 @@ if openai_api_key and github_token:
                 file_name="docs.pkl",
                 mime="application/octet-stream",
             )
+        with open(f'download/{st.session_state.download_file_name}.pkl', "rb") as f:
+            docs = pickle.load(f)
+            index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
     if index:
         # Show the question input field after the data is loaded
