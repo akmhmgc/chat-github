@@ -1,4 +1,5 @@
 import pickle
+import os
 import re
 import uuid
 import streamlit as st
@@ -37,42 +38,40 @@ if openai_api_key and github_token:
     uploaded_file = st.file_uploader("Upload index file (Optional)")
 
     if uploaded_file:
-        with open("uploaded_docs.pkl", "wb") as f:
+        upload_file_name = uuid.uuid4().hex
+        with open(f'upload/{upload_file_name}.pkl', "wb") as f:
             f.write(uploaded_file.getvalue())
-        with open("uploaded_docs.pkl", "rb") as f:
+        with open(f'upload/{upload_file_name}.pkl', "rb") as f:
             docs = pickle.load(f)
         index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
+
+    download_file_name = ''
 
     if st.button("Make index data") and owner and repo and not index:
         # Show a loading message while the data is being created
         with st.spinner("Loading data..."):
+            download_file_name = uuid.uuid4().hex
             # Load the data
-            if not os.path.exists("docs.pkl"):
-                download_loader("GithubRepositoryReader")
-                github_client = GithubClient(github_token)
-                loader = GithubRepositoryReader(
-                    github_client,
-                    owner=owner,
-                    repo=repo,
-                    filter_directories=(filter_directories, GithubRepositoryReader.FilterType.INCLUDE) if filter_directories else None,
-                    filter_file_extensions=(filter_file_extensions, GithubRepositoryReader.FilterType.INCLUDE) if filter_file_extensions else None,
-                    verbose=True,
-                    concurrent_requests=10,
-                )
-                docs = loader.load_data(branch="main")
-                with open("docs.pkl", "wb") as f:
-                    pickle.dump(docs, f)
-            else:
-                with open("docs.pkl", "rb") as f:
-                    docs = pickle.load(f)
+            github_client = GithubClient(github_token)
+            loader = GithubRepositoryReader(
+                github_client,
+                owner=owner,
+                repo=repo,
+                filter_directories=(filter_directories, GithubRepositoryReader.FilterType.INCLUDE) if filter_directories else None,
+                filter_file_extensions=(filter_file_extensions, GithubRepositoryReader.FilterType.INCLUDE) if filter_file_extensions else None,
+                verbose=True,
+                concurrent_requests=10,
+            )
+            docs = loader.load_data(branch="main")
+            with open(f'download/{download_file_name}.pkl', 'wb') as f:
+                pickle.dump(docs, f)
 
             index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
 
-    is_file = os.path.isfile("docs.pkl")
+    is_file = os.path.isfile(f'download/{download_file_name}.pkl')
     if is_file:
-        with open("docs.pkl", "rb") as f:
+        with open(f'download/{download_file_name}.pkl', "rb") as f:
             tmp = f.read()
-            print(f)
             st.download_button(
                 label="Download index data",
                 data=tmp,
