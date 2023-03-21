@@ -3,6 +3,8 @@ import pickle
 import re
 import streamlit as st
 from llama_index import GPTSimpleVectorIndex, download_loader
+download_loader("GithubRepositoryReader")
+
 from llama_index.readers.llamahub_modules.github_repo import GithubClient, GithubRepositoryReader
 
 st.title("OpenAI and GitHub API App")
