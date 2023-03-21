@@ -23,29 +23,32 @@ if openai_api_key and github_token:
     filter_directories = tuple(filter_directories.split(',')) if filter_directories else None
     filter_file_extensions = tuple(filter_file_extensions.split(',')) if filter_file_extensions else None
 
-    if owner and repo:
-        # Load the data
-        if not os.path.exists("docs.pkl"):
-            download_loader("GithubRepositoryReader")
-            github_client = GithubClient(github_token)
-            loader = GithubRepositoryReader(
-                github_client,
-                owner=owner,
-                repo=repo,
-                filter_directories=(filter_directories, GithubRepositoryReader.FilterType.INCLUDE) if filter_directories else None,
-                filter_file_extensions=(filter_file_extensions, GithubRepositoryReader.FilterType.INCLUDE) if filter_file_extensions else None,
-                verbose=True,
-                concurrent_requests=10,
-            )
-            docs = loader.load_data(branch="main")
-            with open("docs.pkl", "wb") as f:
-                pickle.dump(docs, f)
-        else:
-            with open("docs.pkl", "rb") as f:
-                docs = pickle.load(f)
+    if st.button("Make index data"):
+        # Show a loading message while the data is being created
+        with st.spinner("Loading data..."):
+            # Load the data
+            if not os.path.exists("docs.pkl"):
+                download_loader("GithubRepositoryReader")
+                github_client = GithubClient(github_token)
+                loader = GithubRepositoryReader(
+                    github_client,
+                    owner=owner,
+                    repo=repo,
+                    filter_directories=(filter_directories, GithubRepositoryReader.FilterType.INCLUDE) if filter_directories else None,
+                    filter_file_extensions=(filter_file_extensions, GithubRepositoryReader.FilterType.INCLUDE) if filter_file_extensions else None,
+                    verbose=True,
+                    concurrent_requests=10,
+                )
+                docs = loader.load_data(branch="main")
+                with open("docs.pkl", "wb") as f:
+                    pickle.dump(docs, f)
+            else:
+                with open("docs.pkl", "rb") as f:
+                    docs = pickle.load(f)
 
-        index = GPTSimpleVectorIndex(docs)
+            index = GPTSimpleVectorIndex(docs)
 
+        # Show the question input field after the data is loaded
         user_question = st.text_input("Enter your question:", value="")
         if user_question:
             output = index.query(user_question)
