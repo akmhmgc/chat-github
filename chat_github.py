@@ -22,6 +22,9 @@ if 'download_file_name' not in st.session_state:
 if 'docs' not in st.session_state:
     st.session_state['docs'] = None
 
+if 'index' not in st.session_state:
+    st.session_state['index'] = None
+
 if openai_api_key and github_token:
     llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, model_name="text-davinci-003", openai_api_key=openai_api_key))
     st.write("API keys have been set.")
@@ -85,10 +88,11 @@ if openai_api_key and github_token:
         with open(f'upload_{upload_file_name}.pkl', "rb") as f:
             st.session_state.docs = pickle.load(f)
     
-    if st.session_state.docs:
-        index = GPTSimpleVectorIndex(st.session_state.docs, llm_predictor=llm_predictor)
-    print(index)
-    if index:
+    if st.session_state.docs and not st.session_state.index:
+        st.session_state.index = GPTSimpleVectorIndex(st.session_state.docs, llm_predictor=llm_predictor)
+
+    if st.session_state.index:
+        index = st.session_state.index
         # Show the question input field after the data is loaded
         user_question = st.text_input("Enter your question:", value="")
         if user_question:
