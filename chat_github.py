@@ -28,6 +28,7 @@ if openai_api_key and github_token:
     
     # Add input field for repository URL
     repo_url = st.text_input("Repository URL (required)", value="")
+    branch_name = st.text_input("Branch name (required)", value="")
     filter_directories = st.text_input("Filter Directories (optional, comma-separated)", value="")
     filter_file_extensions = st.text_input("Filter File Extensions (optional, comma-separated)", value="")
 
@@ -40,7 +41,7 @@ if openai_api_key and github_token:
     match = url_pattern.match(repo_url)
     owner, repo = match.groups() if match else (None, None)
 
-    if st.button("Make index data") and owner and repo and not index:
+    if st.button("Make index data") and owner and repo and branch_name and not index:
         # Show a loading message while the data is being created
         with st.spinner("Loading data..."):
             download_file_name = uuid.uuid4().hex
@@ -56,7 +57,7 @@ if openai_api_key and github_token:
                 verbose=True,
                 concurrent_requests=10,
             )
-            docs = loader.load_data(branch="main")
+            docs = loader.load_data(branch=branch_name)
             st.session_state.docs = docs
             with open(f'download_{download_file_name}.pkl', 'wb') as f:
                 pickle.dump(docs, f)
