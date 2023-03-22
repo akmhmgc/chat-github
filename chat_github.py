@@ -19,6 +19,9 @@ index = None
 if 'download_file_name' not in st.session_state:
     st.session_state['download_file_name'] = None
 
+if 'docs' not in st.session_state:
+    st.session_state['docs'] = None
+
 if openai_api_key and github_token:
     llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, model_name="text-davinci-003", openai_api_key=openai_api_key))
     st.write("API keys have been set.")
@@ -37,16 +40,6 @@ if openai_api_key and github_token:
     match = url_pattern.match(repo_url)
     owner, repo = match.groups() if match else (None, None)
 
-    uploaded_file = st.file_uploader("Upload index file (Optional)")
-
-    if uploaded_file:
-        upload_file_name = uuid.uuid4().hex
-        with open(f'upload_{upload_file_name}.pkl', "wb") as f:
-            f.write(uploaded_file.getvalue())
-        with open(f'upload_{upload_file_name}.pkl', "rb") as f:
-            docs = pickle.load(f)
-        index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
-
     if st.button("Make index data") and owner and repo and not index:
         # Show a loading message while the data is being created
         with st.spinner("Loading data..."):
@@ -64,10 +57,10 @@ if openai_api_key and github_token:
                 concurrent_requests=10,
             )
             docs = loader.load_data(branch="main")
+            st.session_state.docs = docs
             with open(f'download_{download_file_name}.pkl', 'wb') as f:
                 pickle.dump(docs, f)
-
-            index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
+            st.success("Data loaded successfully!")
 
     is_file = os.path.isfile(f'download_{st.session_state.download_file_name}.pkl')
     if is_file:
@@ -80,9 +73,20 @@ if openai_api_key and github_token:
                 mime="application/octet-stream",
             )
         with open(f'download_{st.session_state.download_file_name}.pkl', "rb") as f:
-            docs = pickle.load(f)
-            index = GPTSimpleVectorIndex(docs, llm_predictor=llm_predictor)
+            st.session_state.docs = pickle.load(f)
 
+    uploaded_file = st.file_uploader("Upload index file (Optional)")
+
+    if uploaded_file and st.button("Upload index data"):
+        upload_file_name = uuid.uuid4().hex
+        with open(f'upload_{upload_file_name}.pkl', "wb") as f:
+            f.write(uploaded_file.getvalue())
+        with open(f'upload_{upload_file_name}.pkl', "rb") as f:
+            st.session_state.docs = pickle.load(f)
+    
+    if st.session_state.docs:
+        index = GPTSimpleVectorIndex(st.session_state.docs, llm_predictor=llm_predictor)
+    print(index)
     if index:
         # Show the question input field after the data is loaded
         user_question = st.text_input("Enter your question:", value="")
