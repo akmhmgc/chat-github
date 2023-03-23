@@ -99,3 +99,6 @@ if openai_api_key and github_token:
             output = index.query(user_question)
             st.write("Response:")
             st.markdown(f"<h3 style='font-size: 18px;'>{output}</h3>", unsafe_allow_html=True)
+
+            st.write("Source:")
+            st.markdown(f"<h3 style='font-size: 18px;'>{output.source_nodes[0].extra_info['file_path']}</h3>", unsafe_allow_html=True)
