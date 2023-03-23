@@ -26,7 +26,7 @@ if 'index' not in st.session_state:
     st.session_state['index'] = None
 
 if openai_api_key and github_token:
-    llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, model_name="text-davinci-003", openai_api_key=openai_api_key))
+    llm_predictor = LLMPredictor(llm=OpenAI(temperature=0, model_name="gpt-3.5-turbo", openai_api_key=openai_api_key))
     st.write("API keys have been set.")
     
     # Add input field for repository URL
